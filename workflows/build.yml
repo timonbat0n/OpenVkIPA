@@ -1,0 +1,33 @@
+name: Build IPA
+on: [push, workflow_dispatch] # Сборка запустится при сохранении или вручную
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+
+      - name: Build Archive
+        run: |
+          xcodebuild -project OpenVkIPA.xcodeproj \
+                     -scheme OpenVk \
+                     -archivePath $PWD/build/YourApp.xcarchive \
+                     archive \
+                     CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA (Unsigned)
+        run: |
+          mkdir -p Payload
+          cp -r $PWD/build/YourApp.xcarchive/Products/Applications/*.app Payload
+          zip -r YourApp.ipa Payload
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-ipa
+          path: YourApp.ipa
